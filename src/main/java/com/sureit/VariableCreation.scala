@@ -51,13 +51,17 @@ object VariableCreation extends App {
 
   val daysOfProportion = DaysOfProporion(inputDataFiltered, inputVariables)
   val prev1to7 = Prev1to7(inputDataFiltered, inputVariables)
+  val same_state = SameState(inputDataFiltered, inputVariables)
+  val discount = Discount(inputDataFiltered, inputVariables)
   val txnOnPerformanceDate = TxnOnPerformanceDate(inputDataFiltered, inputVariables)
   val distanceFromPreviousTxn = DistanceFromPreviousTxn(inputDataFiltered, inputVariables)
 
   val variables = txnOnPerformanceDate
-    .join(distanceFromPreviousTxn, Seq("tag"), "outer")
     .join(daysOfProportion, Seq("tag"), "outer")
+    .join(distanceFromPreviousTxn, Seq("tag"), "outer")
     .join(prev1to7, Seq("tag"), "outer")
+    .join(same_state, Seq("tag"), "outer")
+    .join(discount, Seq("tag"), "outer")
 
   val distinctTag = DistinctTag(inputDataFiltered, inputVariables)
 
@@ -94,7 +98,7 @@ object VariableCreation extends App {
 
   }
   def writeToCSV(df: DataFrame, file: String): Unit = {
-    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/2.3/04"
+    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/2.5/04"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder + file)
   }
 

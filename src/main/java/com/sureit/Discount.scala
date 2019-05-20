@@ -24,7 +24,7 @@ object Discount extends App {
 
   case class Record(tag: String, time: String, discount: String)
 
-  def apply(inputData: RDD[(String, String, String, String, String, String, String, String)], inputVariables: Array[String]) = {
+  def apply(inputData: RDD[(String, String, String, String, String, String, String)], inputVariables: Array[String]) = {
     val spark = getSparkSession()
     import spark.implicits._
     val inputPlaza = inputVariables(0)
@@ -32,8 +32,8 @@ object Discount extends App {
 
     val inputDataFiltered = inputData.filter(x => x._2 == inputPlaza)
       .filter(x => (x._5.substring(0, 10) != performanceDate))
-      .filter(x => (x._7 != "0"))
-      .map(x => (x._1, x._5, x._7))
+      .filter(x => (x._6 != "0"))
+      .map(x => (x._1, x._5, x._6))
     val inputDF = inputDataFiltered.toDF("tag", "time", "discount").persist()
     /*println("sql count**********")
     val t0 = System.currentTimeMillis()
@@ -78,7 +78,7 @@ object Discount extends App {
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      .config("spark.sql.warehouse.dir", "file:///C:/temp")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }
 }
