@@ -1,5 +1,5 @@
 package com.sureit
-
+import java.util.Scanner
 import org.apache.spark._
 import org.apache.spark.SparkContext._
 import org.apache.log4j._
@@ -28,7 +28,7 @@ object Probability {
     import spark.implicits._
 
     val beta = Array(
-     -3.62840, 1.48793, -4.66770, 3.70818,  -2.21066, -0.27923, 0.32080, 0.74241 , 0.77070, 0.89315 , 0.73830, 0.08963 )
+      -3.62840, 1.48793, -4.66770, 3.70818, -2.21066, -0.27923, 0.32080, 0.74241, 0.77070, 0.89315, 0.73830, 0.08963)
     val toDouble = udf[Double, String](_.toDouble)
     val variableFormatted = variable
       .withColumn("nearer", toDouble($"nearer"))
@@ -57,16 +57,17 @@ object Probability {
           lit(beta(9)) * $"prev6" +
           lit(beta(10)) * $"prev7" +
           lit(beta(11)) * $"same_state"))
-          
-          val cutoff = "0.079"
+
+    val S = new Scanner(System.in)
+    print("Enter Cut-off : ")
+    val In4 = S.next()
     val variableWithProb = variableWithZ
       .withColumn(
         "prob", bround((lit(1) / (lit(1) + (exp(lit(-1) * $"z")))), 4))
 
-    val variableWithOutcome = variableWithProb.withColumn("event", (when($"prob" > cutoff, 1).otherwise(0)))
+    val variableWithOutcome = variableWithProb.withColumn("event", (when($"prob" > In4, 1).otherwise(0)))
     variableWithOutcome
 
-    
   }
   def getSparkSession(): SparkSession = {
     SparkSession
