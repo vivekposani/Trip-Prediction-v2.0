@@ -29,12 +29,12 @@ object Implementation extends App {
   val In2 = S.next()
   print("Enter MaxDate Code(Format : 2018-01-01) : ")
   val In3 = S.next()
-  print("Enter Cut-off : ")
-  val In4 = S.next()
+  //  print("Enter Cut-off : ")
+  //  val In4 = S.next()
   val t0 = System.currentTimeMillis()
   println("Running Variable Creation")
   val inputVariables = //Array("54002", "2017-06-19", "2017-04-01")
-    Array(In1, In2, In3, In4)
+    Array(In1, In2, In3)
   val inputPlaza = inputVariables(0)
   val performanceDate = inputVariables(1)
   val inputDate = LocalDate.parse(inputVariables(1))
@@ -103,7 +103,9 @@ object Implementation extends App {
       .map(x => (x(0), x(1), x(2), x(3), x(4), x(5), x(6)))
   }
   def writeToCSV(df: DataFrame, file: String): Unit = {
-    val folder = "hdfs://192.168.70.7:9000/vivek/Implementation/2.5/18"
+    print("Enter Implementation Version Code : ")
+    val Implementation = S.next()
+    val folder = "hdfs://192.168.70.7:9000/vivek/Implementation/" + Implementation
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder + file)
   }
 

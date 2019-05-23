@@ -98,7 +98,10 @@ object VariableCreation extends App {
 
   }
   def writeToCSV(df: DataFrame, file: String): Unit = {
-    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/2.5/04"
+
+    print("Enter Variable Creation Version Code : ")
+    val Version = S.next()
+    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + Version
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder + file)
   }
 

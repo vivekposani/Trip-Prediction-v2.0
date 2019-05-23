@@ -25,10 +25,42 @@ object Probability {
 
   def apply(variable: DataFrame) = {
     val spark = getSparkSession()
+    val S = new Scanner(System.in)
     import spark.implicits._
 
+    print("Enter Parameter Value : ")
+    val Parameter = S.next()
+    print("Enter nearer Value : ")
+    val nearer = S.next()
+    print("Enter distant Value : ")
+    val distant = S.next()
+    print("Enter dp Value : ")
+    val dp = S.next()
+    print("Enter prev1 Value : ")
+    val prev1 = S.next()
+    print("Enter prev2 Value : ")
+    val prev2 = S.next()
+    print("Enter prev3 Value : ")
+    val prev3 = S.next()
+    print("Enter prev4 Value : ")
+    val prev4 = S.next()
+    print("Enter prev5 Value : ")
+    val prev5 = S.next()
+    print("Enter prev6 Value : ")
+    val prev6 = S.next()
+    print("Enter prev7 Value : ")
+    val prev7 = S.next()
+    print("Enter same_state Value : ")
+    val same_state = S.next()
+    print("Enter daily_pass Value : ")
+    val daily_pass = S.next()
+    print("Enter monthly_pass Value : ")
+    val monthly_pass = S.next()
+    print("Enter local Value : ")
+    val local = S.next()
+
     val beta = Array(
-      -3.62840, 1.48793, -4.66770, 3.70818, -2.21066, -0.27923, 0.32080, 0.74241, 0.77070, 0.89315, 0.73830, 0.08963)
+      Parameter, nearer, distant, dp, prev1, prev2, prev3, prev4, prev5, prev6, prev7, same_state, daily_pass, monthly_pass, local)
     val toDouble = udf[Double, String](_.toDouble)
     val variableFormatted = variable
       .withColumn("nearer", toDouble($"nearer"))
@@ -42,6 +74,10 @@ object Probability {
       .withColumn("prev6", toDouble($"prev6"))
       .withColumn("prev7", toDouble($"prev7"))
       .withColumn("same_state", toDouble($"same_state"))
+      .withColumn("same_state", toDouble($"daily_pass"))
+      .withColumn("same_state", toDouble($"monthly_pass"))
+      .withColumn("same_state", toDouble($"local"))
+
     val variableWithZ = variable
       .withColumn(
         "z",
@@ -56,9 +92,11 @@ object Probability {
           lit(beta(8)) * $"prev5" +
           lit(beta(9)) * $"prev6" +
           lit(beta(10)) * $"prev7" +
-          lit(beta(11)) * $"same_state"))
+          lit(beta(12)) * $"same_state" +
+          lit(beta(13)) * $"daily_pass" +
+          lit(beta(13)) * $"monthly_pass" +
+          lit(beta(14)) * $"local"))
 
-    val S = new Scanner(System.in)
     print("Enter Cut-off : ")
     val In4 = S.next()
     val variableWithProb = variableWithZ
