@@ -1,4 +1,5 @@
 package com.sureit
+
 import org.apache.spark._
 import org.apache.spark.storage.StorageLevel
 import java.util.Scanner
@@ -34,7 +35,7 @@ object VariableCreation extends App {
     //    //  print("Enter MaxDate Code : ")
     //    //  val In3 = S.next()
     //
-//    val t0 = System.currentTimeMillis()
+    //    val t0 = System.currentTimeMillis()
     //    println("Running Variable Creation")
     //    val inputVariables = //Array("54002", "2017-06-19", "2017-04-01")
     //      Array(In1, In2)
@@ -76,8 +77,8 @@ object VariableCreation extends App {
     val variable = distinctTag.join(variables, Seq("tag"), "left_outer")
       .na.fill(0)
     //  println(variables.count)
-//    writeToCSV(variable)
-//    println((t1 - t0).toFloat / 1000)
+    //    writeToCSV(variable)
+    //    println((t1 - t0).toFloat / 1000)
     variable
     //  variable.write.mode(SaveMode.Overwrite).csv("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV")
   }
@@ -86,7 +87,7 @@ object VariableCreation extends App {
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp6")
+      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp1")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }
@@ -103,19 +104,19 @@ object VariableCreation extends App {
   //
   //  }
   //  def writeToCSV(df: DataFrame, file: String):
-//  def writeToCSV(df: DataFrame): Unit = {
-//
-//    //      print("Enter Variable Creation Version Code : ")
-//    val Version = 1
-//
-//    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + Version + "/"
-//    //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
-//    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
-//    //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)
-//
-//  }
+  //  def writeToCSV(df: DataFrame): Unit = {
+  //
+  //    //      print("Enter Variable Creation Version Code : ")
+  //    val Version = 1
+  //
+  //    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + Version + "/"
+  //    //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
+  //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
+  //    //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)
+  //
+  //  }
 
-//  val t1 = System.currentTimeMillis()
+  //  val t1 = System.currentTimeMillis()
 
   //9189070480100001CD5C 45 104
 

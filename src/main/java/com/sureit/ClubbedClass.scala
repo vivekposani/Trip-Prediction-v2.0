@@ -32,12 +32,11 @@ object ClubbedClass extends App {
     val inputDataFiltered = inputData.filter(x => x._2 == inputPlaza)
       .filter(x => (x._3.substring(0, 10) != performanceDate))
       .map(x => (x._1, x._6))
-      .toDF("tag", "Clubbed_Class")
+      .toDF("tag", "ClubbedClass")
       .persist(StorageLevel.MEMORY_AND_DISK)
 
-    val Clubbed_Class = inputDataFiltered.distinct
-
-    Clubbed_Class
+    val clubbedclass = inputDataFiltered
+    clubbedclass
 
   }
   def getSparkSession(): SparkSession = {

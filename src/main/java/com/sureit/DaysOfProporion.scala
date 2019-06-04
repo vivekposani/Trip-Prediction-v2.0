@@ -21,7 +21,6 @@ object DaysOfProporion {
 //    print("Enter Max Date for Days Proportion :")
 //    val MaxDate = S.next()
     val MaxDate = LocalDate.parse(performanceDate).minusDays(90).toString()
-    print(MaxDate)
 
     val customizedInputData = inputData .filter(x => x._2 == inputPlaza)
 

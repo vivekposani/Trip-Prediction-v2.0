@@ -22,27 +22,31 @@ import java.time.format.DateTimeFormatter
 import java.sql.Timestamp
 import org.apache.spark.SparkException
 
-object InputData extends App {
-  Logger.getLogger("org").setLevel(Level.ERROR)
+object VariableDynamic extends App {
+  //  Logger.getLogger("org").setLevel(Level.ERROR)
 
   val t0 = System.currentTimeMillis()
   val In2 = "2018-10-01"
   val spark = getSparkSession()
   val plazalist = getInputPlaza.collect().toList
-  print(plazalist)
-  val inputData = getInputData
+  val inputData = getInputData.persist(StorageLevel.MEMORY_AND_DISK)
+  var i = 0
 
-  for (plaza <- plazalist if plaza != null) {
+  for (plaza <- plazalist if plaza != null if i < 2) {
+    print("Started running for Plaza : " + plaza)
     val inputVariables = Array(plaza, In2)
-    val VariableImplimentaion = VariableCreation(inputData, inputVariables)
+    val VariableImplimentaion = VariableCreation(inputData, inputVariables).persist(StorageLevel.MEMORY_AND_DISK)
     writeToCSV(VariableImplimentaion, plaza)
     print("Plaza " + plaza + " Done")
+
+    i += 1
   }
   def getSparkSession(): SparkSession = {
     SparkSession
       .builder
       .appName("SparkSQL")
       .master("local[*]")
+      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp1")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }
@@ -77,6 +81,7 @@ object InputData extends App {
     //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)
 
     val t1 = System.currentTimeMillis()
+    print((t1 - t0).toFloat / 1000)
 
   }
 
