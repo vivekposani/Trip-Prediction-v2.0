@@ -1,5 +1,6 @@
 package com.sureit
 import org.apache.spark._
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.SparkContext._
 import org.apache.log4j._
 import org.apache.spark.sql._
@@ -30,8 +31,9 @@ object Prev1to7 extends App {
     val performanceDate = inputVariables(1)
 
     val customizedInputData = inputData.filter(x => x._2 == inputPlaza)
-      .map(x => (x._1, x._5.substring(0, 10)))
+      .map(x => (x._1, x._3.substring(0, 10)))
       .filter(x => x._2 != performanceDate)
+      .persist(StorageLevel.MEMORY_AND_DISK)
     //.filter(x=>x._1=="34161FA8203286140203EC00")
 
     //customizedInputData.foreach(println)
@@ -42,6 +44,7 @@ object Prev1to7 extends App {
 
       .filter($"time" >= date_add($"perf_date", -7))
       .distinct
+      .persist(StorageLevel.MEMORY_AND_DISK)
 
     implicit def bool2int(b: Boolean) = if (b) 1 else 0
     val prev = customizedInputDataDF
@@ -63,14 +66,13 @@ object Prev1to7 extends App {
     prevGroup
     // agg(collect_set("time"))
     //.withColumn("count",count($"collect_set(time)"))
-
   }
   def getSparkSession(): SparkSession = {
     SparkSession
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-//      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp3")
+      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp3")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }

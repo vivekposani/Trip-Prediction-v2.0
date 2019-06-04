@@ -58,9 +58,13 @@ object Probability {
     val monthly_pass = S.next()
     print("Enter local Value : ")
     val local = S.next()
+    print("Enter clubbed_class Value : ")
+    val clubbed_class = S.next()
+    print("Enter txn Value : ")
+    val txn = S.next()
 
     val beta = Array(
-      Parameter, nearer, distant, dp, prev1, prev2, prev3, prev4, prev5, prev6, prev7, same_state, daily_pass, monthly_pass, local)
+      Parameter, nearer, distant, dp, prev1, prev2, prev3, prev4, prev5, prev6, prev7, same_state, daily_pass, monthly_pass, local, clubbed_class, txn)
     val toDouble = udf[Double, String](_.toDouble)
     val variableFormatted = variable
       .withColumn("nearer", toDouble($"nearer"))
@@ -74,9 +78,13 @@ object Probability {
       .withColumn("prev6", toDouble($"prev6"))
       .withColumn("prev7", toDouble($"prev7"))
       .withColumn("same_state", toDouble($"same_state"))
-      .withColumn("same_state", toDouble($"daily_pass"))
-      .withColumn("same_state", toDouble($"monthly_pass"))
-      .withColumn("same_state", toDouble($"local"))
+      .withColumn("daily_pass", toDouble($"daily_pass"))
+      .withColumn("monthly_pass", toDouble($"monthly_pass"))
+      .withColumn("local", toDouble($"local"))
+      .withColumn("clubbed_class", toDouble($"clubbed_class"))
+      .withColumn("txn", toDouble($"txn"))
+      
+      
 
     val variableWithZ = variable
       .withColumn(
@@ -95,7 +103,9 @@ object Probability {
           lit(beta(12)) * $"same_state" +
           lit(beta(13)) * $"daily_pass" +
           lit(beta(13)) * $"monthly_pass" +
-          lit(beta(14)) * $"local"))
+          lit(beta(14)) * $"local" +
+          lit(beta(14)) * $"clubbed_class" +
+          lit(beta(14)) * $"txn"))
 
     print("Enter Cut-off : ")
     val In4 = S.next()

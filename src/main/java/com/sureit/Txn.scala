@@ -21,7 +21,10 @@ import scala.collection.immutable.TreeSet
 import org.apache.spark.sql.SQLImplicits
 import java.time.{ LocalDate, LocalDateTime, Period, Duration }
 import java.time.format.DateTimeFormatter
-object SameState extends App {
+
+object Txn {
+  case class Record(tag: String, plaza: String, date: String, time: String)
+
   def apply(inputData: RDD[(String, String, String, String, String, String, String)], inputVariables: Array[String]) = {
     val spark = getSparkSession()
     import spark.implicits._
@@ -30,13 +33,13 @@ object SameState extends App {
 
     val inputDataFiltered = inputData.filter(x => x._2 == inputPlaza)
       .filter(x => (x._3.substring(0, 10) != performanceDate))
-      .map(x => (x._1, x._4))
-      .toDF("tag", "same_state")
+      .map(x => (x._1, x._7))
+      .toDF("tag", "Clubbed_Class")
       .persist(StorageLevel.MEMORY_AND_DISK)
 
-    val distinctTag = inputDataFiltered.distinct
+    val Clubbed_Class = inputDataFiltered
 
-    distinctTag
+    Clubbed_Class
 
   }
   def getSparkSession(): SparkSession = {

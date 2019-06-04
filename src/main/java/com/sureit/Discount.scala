@@ -1,6 +1,7 @@
 package com.sureit
 
 import org.apache.spark._
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.SparkContext._
 import org.apache.log4j._
 import org.apache.spark.sql._
@@ -31,10 +32,12 @@ object Discount extends App {
     val performanceDate = inputVariables(1)
 
     val inputDataFiltered = inputData.filter(x => x._2 == inputPlaza)
-      .filter(x => (x._5.substring(0, 10) != performanceDate))
-      .filter(x => (x._6 != "0"))
-      .map(x => (x._1, x._5, x._6))
-    val inputDF = inputDataFiltered.toDF("tag", "time", "discount").persist()
+      .filter(x => (x._3.substring(0, 10) != performanceDate))
+      .filter(x => (x._5 != "0"))
+      .map(x => (x._1, x._3, x._5))
+      .persist(StorageLevel.MEMORY_AND_DISK)
+
+    val inputDF = inputDataFiltered.toDF("tag", "time", "discount").persist(StorageLevel.MEMORY_AND_DISK)
     /*println("sql count**********")
     val t0 = System.currentTimeMillis()
     val maxTime = inputDF.groupBy($"tag").agg($"tag", max($"time").alias("time"))
@@ -44,33 +47,28 @@ object Discount extends App {
     val t1 = System.currentTimeMillis()
     println("sql:" + (t1 - t0).toFloat / 1000)*/
 
-    
-   
-
     val tagWithDiscount = inputDF.as[Record]
       .groupByKey(x => (x.tag))
       .reduceGroups((x, y) => if (x.time > y.time) { x } else { y })
       .map(x => (x._2.tag, x._2.discount, x._2.time)) //.toDF("tag", "discount", "time").persist
-
+      .persist(StorageLevel.MEMORY_AND_DISK)
     val tagWithDailyAndMonthly = tagWithDiscount.filter(x => x._2 != 3)
       // .map{case(x)=>if(x._3==0) x}
       .map(x => (x,
         (if (x._2 == "1") (1, 0) else if (x._2 == "2") (0, 1) else (0, 0))))
-      .map(x => (x._1._1,  x._2._1, x._2._2))
+      .map(x => (x._1._1, x._2._1, x._2._2))
       .toDF("tag", "daily_pass", "monthly_pass")
+      .persist(StorageLevel.MEMORY_AND_DISK)
 
     val local = tagWithDiscount.filter(x => x._2 == "3").map(x => (x._1, 1)).distinct.toDF("tag", "local")
     val discountVariables = tagWithDailyAndMonthly.join(local, Seq("tag"), "outer")
 
-   discountVariables
+    discountVariables
     //.filter($"monthly_pass"===1)
-    
 
     // val x=tagWithDiscount.filter($"discount"===1).except(req.filter($"discount"===1))
 
     //x.show(false)
-
-   
 
   }
   def getSparkSession(): SparkSession = {
