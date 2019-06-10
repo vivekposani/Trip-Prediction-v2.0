@@ -23,30 +23,51 @@ import java.sql.Timestamp
 import org.apache.spark.SparkException
 
 object VariableDynamic extends App {
-  //  Logger.getLogger("org").setLevel(Level.ERROR)
+  Logger.getLogger("org").setLevel(Level.ERROR)
 
   val t0 = System.currentTimeMillis()
-  val In2 = "2018-10-01"
+  //  val In2 = "2018-10-01"
   val spark = getSparkSession()
   val plazalist = getInputPlaza.collect().toList
-  val inputData = getInputData.persist(StorageLevel.MEMORY_AND_DISK)
+  val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
+
+  //   val plaza = "8001"
+  //  for (plaza <- plazalist if plaza != null if i < 2) {
+  //    print("Started running for Plaza : " + plaza)
+  //    val inputVariables = Array(plaza, In2)
+  //    val Variable = VariableCreation(inputData, inputVariables)
+  //    println("count of rows :"+ Variable.count())
+  //    writeToCSV(Variable, plaza)
+  //    print("Plaza " + plaza + " Done")
   var i = 0
+  //  }
 
-  for (plaza <- plazalist if plaza != null if i < 2) {
-    print("Started running for Plaza : " + plaza)
-    val inputVariables = Array(plaza, In2)
-    val VariableImplimentaion = VariableCreation(inputData, inputVariables).persist(StorageLevel.MEMORY_AND_DISK)
-    writeToCSV(VariableImplimentaion, plaza)
-    print("Plaza " + plaza + " Done")
+  //  val plazaWithBeta = getInputPlaza
 
+  plazalist.map { x =>
+    //    print("begin")
+
+    val j = i.toString()
+    val plazaWithBetaArray = x.split(";")
+    val plaza = plazaWithBetaArray(0)
+    val date = plazaWithBetaArray(1)
+    //    val beta = plazaWithBetaArray(1).split(",")
+    println("Started running for Plaza : " + plaza)
+    val inputVariables = Array(plaza, date, j)
+    val variables = VariableCreation(inputData, inputVariables)
+    //    val implementationOut = Probability(variables, beta)
+    //    println(implementationOut.count)
+    writeToCSV(variables, plaza, date)
+    println("Plaza " + plaza + " Done")
     i += 1
+
   }
+
   def getSparkSession(): SparkSession = {
     SparkSession
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp1")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }
@@ -54,7 +75,7 @@ object VariableDynamic extends App {
   def getInputPlaza = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.txt")
+    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
 
   }
 
@@ -71,11 +92,11 @@ object VariableDynamic extends App {
 
   }
 
-  def writeToCSV(df: DataFrame, plaza: String): Unit = {
+  def writeToCSV(df: DataFrame, plaza: String, date: String): Unit = {
 
     //      print("Enter Variable Creation Version Code : ")
 
-    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + plaza + "/"
+    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + plaza + "/" + date + "/"
     //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
     //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)

@@ -18,6 +18,8 @@ object TxnOnPerformanceDate {
 
     val tagWithTxnOnPerformanceDate = customizedInputData.filter(x => (x._2 == performanceDate))
       .map(x => (x._1, 1))
+    //     .persist(StorageLevel.DISK_ONLY)
+
     val tagWithTxnOnPerformanceDateDF = tagWithTxnOnPerformanceDate.toDF("tag", "txn_on_input_date")
     tagWithTxnOnPerformanceDateDF
   }
@@ -26,7 +28,6 @@ object TxnOnPerformanceDate {
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp1")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }

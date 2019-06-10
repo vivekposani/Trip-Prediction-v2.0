@@ -32,7 +32,7 @@ object SameState extends App {
       .filter(x => (x._3.substring(0, 10) != performanceDate))
       .map(x => (x._1, x._4))
       .toDF("tag", "same_state")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+    // .persist(StorageLevel.MEMORY_AND_DISK)
 
     val distinctTag = inputDataFiltered.distinct
 

@@ -41,7 +41,8 @@ object VariableCreation extends App {
     //      Array(In1, In2)
     val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
-    val inputVariables1 = Array(inputPlaza, performanceDate)
+    val j = inputVariables(2)
+    val inputVariables1 = Array(inputPlaza, performanceDate,j)
     //  val inputDate = LocalDate.parse(inputVariables(1))
     //  val startDate = inputVariables(2)
 
@@ -51,8 +52,8 @@ object VariableCreation extends App {
 
     val inputDataFiltered = inputData
       .filter(x => (x._3.substring(0, 10) <= performanceDate))
-      //    .filter(x => (x._3.substring(0, 10) >= startDate))
-      .persist(StorageLevel.MEMORY_AND_DISK)
+    //    .filter(x => (x._3.substring(0, 10) >= startDate))
+    //.persist(StorageLevel.MEMORY_AND_DISK)
 
     val daysOfProportion = DaysOfProporion(inputDataFiltered, inputVariables1)
     val prev1to7 = Prev1to7(inputDataFiltered, inputVariables1)
@@ -60,8 +61,8 @@ object VariableCreation extends App {
     val distanceFromPreviousTxn = DistanceFromPreviousTxn(inputDataFiltered, inputVariables1)
     val same_state = SameState(inputDataFiltered, inputVariables1)
     val discount = Discount(inputDataFiltered, inputVariables1)
-    val clubbed_class = ClubbedClass(inputDataFiltered, inputVariables1)
-    val txn = Txn(inputDataFiltered, inputVariables1)
+    //    val clubbed_class = ClubbedClass(inputDataFiltered, inputVariables1)
+    //    val txn = Txn(inputDataFiltered, inputVariables1)
 
     val variables = txnOnPerformanceDate
       .join(distanceFromPreviousTxn, Seq("tag"), "outer")
@@ -69,13 +70,15 @@ object VariableCreation extends App {
       .join(prev1to7, Seq("tag"), "outer")
       .join(same_state, Seq("tag"), "outer")
       .join(discount, Seq("tag"), "outer")
-      .join(clubbed_class, Seq("tag"), "outer")
-      .join(txn, Seq("tag"), "outer")
+    //      .join(clubbed_class, Seq("tag"), "outer")
+    //      .join(txn, Seq("tag"), "outer")
+    // .persist(StorageLevel.DISK_ONLY)
 
     val distinctTag = DistinctTag(inputDataFiltered, inputVariables)
 
     val variable = distinctTag.join(variables, Seq("tag"), "left_outer")
       .na.fill(0)
+    //.persist(StorageLevel.DISK_ONLY)
     //  println(variables.count)
     //    writeToCSV(variable)
     //    println((t1 - t0).toFloat / 1000)
@@ -87,7 +90,6 @@ object VariableCreation extends App {
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp1")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }
