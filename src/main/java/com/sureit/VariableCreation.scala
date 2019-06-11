@@ -1,6 +1,7 @@
 package com.sureit
 
 import org.apache.spark._
+import scala.math
 import org.apache.spark.storage.StorageLevel
 import java.util.Scanner
 import org.apache.spark.SparkContext._
@@ -42,7 +43,7 @@ object VariableCreation extends App {
     val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
     val j = inputVariables(2)
-    val inputVariables1 = Array(inputPlaza, performanceDate,j)
+    val inputVariables1 = Array(inputPlaza, performanceDate, j)
     //  val inputDate = LocalDate.parse(inputVariables(1))
     //  val startDate = inputVariables(2)
 
@@ -54,13 +55,14 @@ object VariableCreation extends App {
       .filter(x => (x._3.substring(0, 10) <= performanceDate))
     //    .filter(x => (x._3.substring(0, 10) >= startDate))
     //.persist(StorageLevel.MEMORY_AND_DISK)
-
+ 
     val daysOfProportion = DaysOfProporion(inputDataFiltered, inputVariables1)
     val prev1to7 = Prev1to7(inputDataFiltered, inputVariables1)
     val txnOnPerformanceDate = TxnOnPerformanceDate(inputDataFiltered, inputVariables1)
     val distanceFromPreviousTxn = DistanceFromPreviousTxn(inputDataFiltered, inputVariables1)
     val same_state = SameState(inputDataFiltered, inputVariables1)
     val discount = Discount(inputDataFiltered, inputVariables1)
+
     //    val clubbed_class = ClubbedClass(inputDataFiltered, inputVariables1)
     //    val txn = Txn(inputDataFiltered, inputVariables1)
 

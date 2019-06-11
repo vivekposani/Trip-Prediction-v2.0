@@ -44,20 +44,24 @@ object Implementation extends App {
   //  }
 
   //  val plazaWithBeta = getInputPlaza
-
+  var i = 0
   plazalist.map { x =>
     //    print("begin")
+    val j = i.toString()
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
-    val beta = plazaWithBetaArray(1).split(",")
+    val date = plazaWithBetaArray(1)
+    val beta = plazaWithBetaArray(2).split(",")
     println("Started running for Plaza : " + plaza)
-    val inputVariables = Array(plaza, In2)
+    val inputVariables = Array(plaza, date, j)
     val variables = VariableCreation(inputData, inputVariables)
     val implementationOut = Probability(variables, beta)
+    
     //    val out = implementationOut.collect().map(x => (x(0), x(1), x(17)))
 
-    writeToCSV(implementationOut, plaza)
+    writeToCSV(implementationOut, plaza, date)
     println("Plaza " + plaza + " Done")
+    i += 1
 
   }
 
@@ -73,7 +77,7 @@ object Implementation extends App {
   def getInputPlaza = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.txt")
+    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
 
   }
 
@@ -90,11 +94,11 @@ object Implementation extends App {
 
   }
 
-  def writeToCSV(df: DataFrame, plaza: String): Unit = {
+  def writeToCSV(df: DataFrame, plaza: String, date: String): Unit = {
 
     //      print("Enter Variable Creation Version Code : ")
 
-    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + plaza + "/"
+    val folder = "hdfs://192.168.70.7:9000/vivek/Implementation/" + plaza + "/" + date + "/"
     //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
     //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)

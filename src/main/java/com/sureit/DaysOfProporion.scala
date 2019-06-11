@@ -43,7 +43,8 @@ object DaysOfProporion {
     val tagCountMinDF = spark.sql("select tag,count(tag) count,min(time) start_date from " + view + " group by tag")
 
     val tagCountDiff = tagCountMinDF.withColumn("diff", datediff(to_date(lit(performanceDate)), $"start_date"))
-    val daysProportionDF = tagCountDiff.select($"tag", bround(($"count" / $"diff"), 4) as "dp")
+    val daysProportionDF = tagCountDiff.select($"tag", bround(($"count" / $"diff"), 7) as "dp").withColumn("dplog", bround(log(10, "dp"), 7))
+    //    val daysProportionDF = daysProportionDF1.withColumn("dplog", log(10, "dp"))
 
     daysProportionDF
 

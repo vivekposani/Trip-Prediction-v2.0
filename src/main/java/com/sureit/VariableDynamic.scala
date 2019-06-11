@@ -55,9 +55,10 @@ object VariableDynamic extends App {
     println("Started running for Plaza : " + plaza)
     val inputVariables = Array(plaza, date, j)
     val variables = VariableCreation(inputData, inputVariables)
+    variables.show(10)
     //    val implementationOut = Probability(variables, beta)
     //    println(implementationOut.count)
-    writeToCSV(variables, plaza, date)
+//    writeToCSV(variables, plaza, date)
     println("Plaza " + plaza + " Done")
     i += 1
 
