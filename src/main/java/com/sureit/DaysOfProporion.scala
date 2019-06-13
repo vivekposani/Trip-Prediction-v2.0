@@ -44,7 +44,6 @@ object DaysOfProporion {
 
     val tagCountDiff = tagCountMinDF.withColumn("diff", datediff(to_date(lit(performanceDate)), $"start_date"))
     val daysProportionDF = tagCountDiff.select($"tag", bround(($"count" / $"diff"), 7) as "dp").withColumn("dplog", bround(log(10, "dp"), 7))
-    //    val daysProportionDF = daysProportionDF1.withColumn("dplog", log(10, "dp"))
 
     daysProportionDF
 

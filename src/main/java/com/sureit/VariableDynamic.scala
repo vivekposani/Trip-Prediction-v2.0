@@ -58,7 +58,7 @@ object VariableDynamic extends App {
     variables.show(10)
     //    val implementationOut = Probability(variables, beta)
     //    println(implementationOut.count)
-//    writeToCSV(variables, plaza, date)
+    //    writeToCSV(variables, plaza, date)
     println("Plaza " + plaza + " Done")
     i += 1
 

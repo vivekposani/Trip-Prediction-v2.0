@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter
 
 object Probability {
 
-  def apply(variable: DataFrame, beta: Array[String]) = {
+  def apply(variable: DataFrame, beta: Array[String], cutoff: String) = {
     val spark = getSparkSession()
     //    val S = new Scanner(System.in)
     import spark.implicits._
@@ -114,7 +114,7 @@ object Probability {
       .withColumn(
         "prob", bround((lit(1) / (lit(1) + (exp(lit(-1) * $"z")))), 4))
 
-    val variableWithOutcome = variableWithProb.withColumn("event", (when($"prob" > 0.05, 1).otherwise(0)))
+    val variableWithOutcome = variableWithProb.withColumn("event", (when($"prob" > cutoff, 1).otherwise(0)))
     variableWithOutcome
 
   }

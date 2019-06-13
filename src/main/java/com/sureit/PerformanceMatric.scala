@@ -34,8 +34,10 @@ object PerformanceMatric extends App {
   Logger.getLogger("org").setLevel(Level.ERROR)
 
   val spark: SparkSession = getSparkSession()
-  val plazalist = getInputPlaza.collect().toList
-
+  val plazalist1 = getInputPlaza.mapPartitionsWithIndex {
+    (idx, iter) => if (idx == 0) iter.drop(1) else iter
+  }
+  val plazalist = plazalist1.collect().toList
   val url = "jdbc:sqlserver://192.168.70.15:1433; database=SUREIT"
   val properties = new Properties()
   properties.put("user", "vivek")
@@ -50,6 +52,7 @@ object PerformanceMatric extends App {
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
+//    println(date)
 
     val Input = getInputData(plaza, date)
     //    println(Input.count())
@@ -57,11 +60,14 @@ object PerformanceMatric extends App {
       (idx, iter) => if (idx == 0) iter.drop(1) else iter
     }
     //    InputFiltered.take(5).foreach(println)
+    val query = "(select distinct TAGID from SUREIT.CTP.INSIGHT where PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = '" + date + "') Event"
+    val Event = spark.read.jdbc(url = url, table = query, properties).count()
+    val Predict = InputFiltered.filter(x => x._3 == "1").count()
     val FalseNegitive = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "0").count()
     val TruePositive = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "1").count()
     val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count()
     val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count()
-    val Final = (plaza, FalseNegitive, TruePositive, Type1, Type2)
+    val Final = (plaza, date, Event, Predict, FalseNegitive, TruePositive, Type1, Type2)
 
     Final
     //    println(Final)
@@ -86,8 +92,8 @@ object PerformanceMatric extends App {
 
   }
   import spark.implicits._
-  val Output = spark.sparkContext.parallelize(x).toDF("Plaza", "FalseNegitive", "TruePositive", "Type1", "Type2")
-  //    Output.show()
+  val Output = spark.sparkContext.parallelize(x).toDF("Plaza", "Date", "Event", "Predict", "FalseNegitive", "TruePositive", "Type1", "Type2")
+      Output.show(50)
   val format = new SimpleDateFormat("yyyy-MM-dd")
   val Date = format.format(Calendar.getInstance().getTime())
   write(Output, Date)
@@ -106,7 +112,7 @@ object PerformanceMatric extends App {
     val spark = getSparkSession()
     spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/Implementation/" + plaza + "/" + date + "/")
       .map(_.split(","))
-      .map(x => (x(0), x(1), x(18)))
+      .map(x => (x(0), x(1), x(19)))
   }
 
   def getInputPlaza = {
