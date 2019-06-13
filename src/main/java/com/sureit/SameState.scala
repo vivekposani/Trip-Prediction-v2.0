@@ -34,9 +34,14 @@ object SameState extends App {
       .toDF("tag", "same_state")
     // .persist(StorageLevel.MEMORY_AND_DISK)
 
-    val distinctTag = inputDataFiltered.distinct
+    val trips = inputDataFiltered.groupBy("tag").agg(sum(col("tag"))).withColumnRenamed("sum(tag)", "tag_COUNT")
+    val trips_count1 = trips.select($"tag", $"tag_COUNT").withColumn("TRIPS>1", when(col("tag_COUNT") > 1, lit(1)).otherwise(lit(0)))
+    val TRIPS_COUNT = trips_count1.select("tag", "TRIPS>1")
 
-    distinctTag
+    val distinctTag = inputDataFiltered.distinct
+    val same_state = distinctTag.join(TRIPS_COUNT, Seq("tag"), "outer")
+
+    same_state
 
   }
   def getSparkSession(): SparkSession = {
