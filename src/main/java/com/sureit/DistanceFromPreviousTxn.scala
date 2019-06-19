@@ -1,6 +1,7 @@
 package com.sureit
 
 import org.apache.spark._
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.SparkContext._
 import org.apache.log4j._
 import org.apache.spark.sql._
@@ -34,22 +35,26 @@ object DistanceFromPreviousTxn extends App {
 
     val customizedInputData = inputData
 
-      .map(x => (x._1, x._2, x._5.substring(0, 10), x._5.substring(10)))
+      .map(x => (x._1, x._2, x._3.substring(0, 10), x._3.substring(10)))
       .filter(x => (x._3 == prevDay))
       .distinct
       .toDF("tag", "plaza", "date", "time")
+    // .persist(StorageLevel.DISK_ONLY)
 
     val tagWithLastPlaza = customizedInputData.as[Record]
       .groupByKey(x => (x.tag))
       .reduceGroups((x, y) => if (x.time > y.time) x else y)
       .map(x => (x._1, x._2.plaza)).toDF("tag", "plaza")
+    // .persist(StorageLevel.DISK_ONLY)
+
     val plazaDistance = getplazaDistance
       .filter(x => x._1 == inputPlaza).map(x => (x._2, x._3))
       .toDF("plaza", "distance")
+    //.persist(StorageLevel.DISK_ONLY)
 
     val plazaWithDistance = tagWithLastPlaza.
       join(plazaDistance, Seq("plaza"))
-
+    //.persist(StorageLevel.DISK_ONLY)
     val plazaDistanceVariables = plazaWithDistance
       .select(
         $"tag",
@@ -64,7 +69,6 @@ object DistanceFromPreviousTxn extends App {
       .builder
       .appName("SparkSQL")
       .master("local[*]")
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp9")
       .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
       .getOrCreate()
   }

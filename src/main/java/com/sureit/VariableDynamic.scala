@@ -1,7 +1,6 @@
 package com.sureit
 
 import org.apache.spark._
-import scala.collection.Iterator
 import org.apache.spark.storage.StorageLevel
 import java.util.Scanner
 import org.apache.spark.SparkContext._
@@ -23,19 +22,16 @@ import java.time.format.DateTimeFormatter
 import java.sql.Timestamp
 import org.apache.spark.SparkException
 
-object Implementation extends App {
-  //  Logger.getLogger("org").setLevel(Level.ERROR)
+object VariableDynamic extends App {
+  Logger.getLogger("org").setLevel(Level.ERROR)
 
   val t0 = System.currentTimeMillis()
-  val spark: SparkSession = getSparkSession()
-  import spark.implicits._
-
-  val plazalist = getInputPlaza
-    .mapPartitionsWithIndex {
-      (idx, iter) => if (idx == 0) iter.drop(1) else iter
-    }
-    .collect().toList.par
-
+  //  val In2 = "2018-10-01"
+  val spark = getSparkSession()
+  val In = getInputPlaza.mapPartitionsWithIndex {
+    (idx, iter) => if (idx == 0) iter.drop(1) else iter
+  }
+  val plazalist = In.collect.toList.par
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
 
   //   val plaza = "8001"
@@ -47,34 +43,24 @@ object Implementation extends App {
   //    writeToCSV(Variable, plaza)
   //    print("Plaza " + plaza + " Done")
 
-  //    i += 1
   //  }
 
-  //  val plazaWithBeta = plazalist.map(_.split(";")).map(x => (x(0), x(1), x(2), x(3)))
-  //  In.show(10)
+  //  val plazaWithBeta = getInputPlaza
 
-  plazalist.foreach { x =>
-    //    println(x)
+  plazalist.map { x =>
 
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
-    val beta = plazaWithBetaArray(2).split(",")
-    val cutoff = plazaWithBetaArray(3)
-
+    //    val beta = plazaWithBetaArray(1).split(",")
     println("Started running for Plaza : " + plaza)
-
     val inputVariables = Array(plaza, date)
-    val variables = VariableCreation(inputData, inputVariables)
-    val implementationOut = Probability(variables, beta, cutoff)
-    implementationOut.show(10)
-    //
-    //    val out = implementationOut.collect().map(x => (x(0), x(1), x(17)))
-    //    println(out)
+    val lastplaza = LastPlaza(inputData, inputVariables)
+    val variables = VariableCreation(inputData, inputVariables).join(lastplaza, Seq("tag"), "outer")
+    variables.show(10)
 
-    //    writeToCSV(implementationOut, plaza, date)
-
-    //    println("Plaza " + plaza + " Done")s
+    //        writeToCSV(variables, plaza, date)
+    println("Plaza " + plaza + " Done")
 
   }
 
@@ -111,7 +97,7 @@ object Implementation extends App {
 
     //      print("Enter Variable Creation Version Code : ")
 
-    val folder = "hdfs://192.168.70.7:9000/vivek/Implementation/" + plaza + "/" + date + "/"
+    val folder = "hdfs://192.168.70.7:9000/vivek/VariableCreation/" + plaza + "/" + date + "/"
     //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
     //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)
