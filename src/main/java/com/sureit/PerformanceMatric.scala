@@ -52,7 +52,7 @@ object PerformanceMatric extends App {
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
-//    println(date)
+    //    println(date)
 
     val Input = getInputData(plaza, date)
     //    println(Input.count())
@@ -61,13 +61,22 @@ object PerformanceMatric extends App {
     }
     //    InputFiltered.take(5).foreach(println)
     val query = "(select distinct TAGID from SUREIT.CTP.INSIGHT where PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = '" + date + "') Event"
+
     val Event = spark.read.jdbc(url = url, table = query, properties).count()
     val Predict = InputFiltered.filter(x => x._3 == "1").count()
-    val FalseNegitive = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "0").count()
+
+    val TrueNegitive = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "0").count()
     val TruePositive = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "1").count()
-    val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count()
-    val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count()
-    val Final = (plaza, date, Event, Predict, FalseNegitive, TruePositive, Type1, Type2)
+    val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count() //FalsePositive
+    val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count() //FalseNegitive
+
+    val Accuracy = (TrueNegitive + TruePositive) / (TruePositive + TruePositive + Type1 + Type2)
+    val Sensitivity = TruePositive / (TruePositive + Type2)
+    val FPR = Type1 / (Type1 + TrueNegitive)
+    val OPR = TruePositive / (Type1 + TruePositive)
+    val F1 = (lit(2) * TruePositive) / ((lit(2) * TruePositive) + Type1 + Type2)
+
+    val Final = (plaza, date, Event, Predict, TrueNegitive, TruePositive, Type1, Type2, Accuracy, Sensitivity, FPR, OPR)
 
     Final
     //    println(Final)
@@ -93,7 +102,7 @@ object PerformanceMatric extends App {
   }
   import spark.implicits._
   val Output = spark.sparkContext.parallelize(x).toDF("Plaza", "Date", "Event", "Predict", "FalseNegitive", "TruePositive", "Type1", "Type2")
-      Output.show(50)
+  Output.show(50)
   val format = new SimpleDateFormat("yyyy-MM-dd")
   val Date = format.format(Calendar.getInstance().getTime())
   write(Output, Date)

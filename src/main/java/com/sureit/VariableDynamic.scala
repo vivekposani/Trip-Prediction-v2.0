@@ -28,7 +28,10 @@ object VariableDynamic extends App {
   val t0 = System.currentTimeMillis()
   //  val In2 = "2018-10-01"
   val spark = getSparkSession()
-  val plazalist = getInputPlaza.collect().toList
+  val In = getInputPlaza.mapPartitionsWithIndex {
+    (idx, iter) => if (idx == 0) iter.drop(1) else iter
+  }
+  val plazalist = In.collect.toList.par
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
 
   //   val plaza = "8001"
@@ -39,28 +42,25 @@ object VariableDynamic extends App {
   //    println("count of rows :"+ Variable.count())
   //    writeToCSV(Variable, plaza)
   //    print("Plaza " + plaza + " Done")
-  var i = 0
+
   //  }
 
   //  val plazaWithBeta = getInputPlaza
 
   plazalist.map { x =>
-    //    print("begin")
 
-    val j = i.toString()
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
     //    val beta = plazaWithBetaArray(1).split(",")
     println("Started running for Plaza : " + plaza)
-    val inputVariables = Array(plaza, date, j)
-    val variables = VariableCreation(inputData, inputVariables)
+    val inputVariables = Array(plaza, date)
+    val lastplaza = LastPlaza(inputData, inputVariables)
+    val variables = VariableCreation(inputData, inputVariables).join(lastplaza, Seq("tag"), "outer")
     variables.show(10)
-    //    val implementationOut = Probability(variables, beta)
-    //    println(implementationOut.count)
-    //    writeToCSV(variables, plaza, date)
+
+    //        writeToCSV(variables, plaza, date)
     println("Plaza " + plaza + " Done")
-    i += 1
 
   }
 

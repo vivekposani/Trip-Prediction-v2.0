@@ -1,6 +1,7 @@
 package com.sureit
 
 import org.apache.spark._
+import scala.collection.Iterator
 import org.apache.spark.storage.StorageLevel
 import java.util.Scanner
 import org.apache.spark.SparkContext._
@@ -23,19 +24,20 @@ import java.sql.Timestamp
 import org.apache.spark.SparkException
 
 object Implementation extends App {
-  Logger.getLogger("org").setLevel(Level.ERROR)
+  //  Logger.getLogger("org").setLevel(Level.ERROR)
 
   val t0 = System.currentTimeMillis()
-  val In2 = "2018-10-01"
   val spark: SparkSession = getSparkSession()
   import spark.implicits._
-  val z = getInputPlaza
-  val y = z.mapPartitionsWithIndex {
-    (idx, iter) => if (idx == 0) iter.drop(1) else iter
-  }
-  val plazalist = y.collect().toList
+
+  val plazalist = getInputPlaza
+    .mapPartitionsWithIndex {
+      (idx, iter) => if (idx == 0) iter.drop(1) else iter
+    }
+    .collect().toList.par
+
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
-  //  var i = 0
+
   //   val plaza = "8001"
   //  for (plaza <- plazalist if plaza != null if i < 2) {
   //    print("Started running for Plaza : " + plaza)
@@ -48,41 +50,33 @@ object Implementation extends App {
   //    i += 1
   //  }
 
-  val plazaWithBeta = getInputPlaza.map(_.split(";")).map(x => (x(0), x(1), x(2), x(3)))
-  val In = spark.createDataFrame(plazaWithBeta).toDF("PLAZA", "DATE", "BETA", "CUTOFF")
-  In.show(10)
-  var i = 0
+  //  val plazaWithBeta = plazalist.map(_.split(";")).map(x => (x(0), x(1), x(2), x(3)))
+  //  In.show(10)
 
-  In.foreach { x =>
+  plazalist.foreach { x =>
+    //    println(x)
 
-    val plaza = In.select("PLAZA")
-    val date = In.select("DATE")
-    val beta = In.select("BETA")
-    val cutoff = In.select("CUTOFF")
+    val plazaWithBetaArray = x.split(";")
+    val plaza = plazaWithBetaArray(0)
+    val date = plazaWithBetaArray(1)
+    val beta = plazaWithBetaArray(2).split(",")
+    val cutoff = plazaWithBetaArray(3)
+
+    println("Started running for Plaza : " + plaza)
+
+    val inputVariables = Array(plaza, date)
+    val variables = VariableCreation(inputData, inputVariables)
+    val implementationOut = Probability(variables, beta, cutoff)
+    implementationOut.show(10)
+    //
+    //    val out = implementationOut.collect().map(x => (x(0), x(1), x(17)))
+    //    println(out)
+
+    //    writeToCSV(implementationOut, plaza, date)
+
+    //    println("Plaza " + plaza + " Done")s
 
   }
-
-  //  In.map { x =>
-  //    //    print("begin")
-  //    val j = i.toString()
-  //    val plazaWithBetaArray = x.split(";")
-  //    val plaza = x.select("PLAZA")
-  //    val date = plazaWithBetaArray(1)
-  //    val beta = plazaWithBetaArray(2).split(",")
-  //    val cutoff = plazaWithBetaArray(3)
-  //    println("Started running for Plaza : " + plaza)
-  //    val inputVariables = Array(plaza, date, j)
-  //    val variables = VariableCreation(inputData, inputVariables)
-
-  //    val implementationOut = Probability(variables, beta, cutoff)
-
-  //    val out = implementationOut.collect().map(x => (x(0), x(1), x(17)))
-
-  //    writeToCSV(implementationOut, plaza, date)
-  //    println("Plaza " + plaza + " Done")
-  //    i += 1
-  //
-  //  }
 
   def getSparkSession(): SparkSession = {
     SparkSession

@@ -40,10 +40,10 @@ object VariableCreation extends App {
     //    println("Running Variable Creation")
     //    val inputVariables = //Array("54002", "2017-06-19", "2017-04-01")
     //      Array(In1, In2)
-    val inputPlaza = inputVariables(0)
+    //    val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
-    val j = inputVariables(2)
-    val inputVariables1 = Array(inputPlaza, performanceDate, j)
+    //    val j = inputVariables(2)
+    //    val inputVariables1 = Array(inputPlaza, performanceDate, j)
     //  val inputDate = LocalDate.parse(inputVariables(1))
     //  val startDate = inputVariables(2)
 
@@ -55,16 +55,13 @@ object VariableCreation extends App {
       .filter(x => (x._3.substring(0, 10) <= performanceDate))
     //    .filter(x => (x._3.substring(0, 10) >= startDate))
     //.persist(StorageLevel.MEMORY_AND_DISK)
- 
-    val daysOfProportion = DaysOfProporion(inputDataFiltered, inputVariables1)
-    val prev1to7 = Prev1to7(inputDataFiltered, inputVariables1)
-    val txnOnPerformanceDate = TxnOnPerformanceDate(inputDataFiltered, inputVariables1)
-    val distanceFromPreviousTxn = DistanceFromPreviousTxn(inputDataFiltered, inputVariables1)
-    val same_state = SameState(inputDataFiltered, inputVariables1)
-    val discount = Discount(inputDataFiltered, inputVariables1)
 
-    //    val clubbed_class = ClubbedClass(inputDataFiltered, inputVariables1)
-    //    val txn = Txn(inputDataFiltered, inputVariables1)
+    val daysOfProportion = DaysOfProporion(inputDataFiltered, inputVariables)
+    val prev1to7 = Prev1to7(inputDataFiltered, inputVariables)
+    val txnOnPerformanceDate = TxnOnPerformanceDate(inputDataFiltered, inputVariables)
+    val distanceFromPreviousTxn = DistanceFromPreviousTxn(inputDataFiltered, inputVariables)
+    val same_state = SameState(inputDataFiltered, inputVariables)
+    val discount = Discount(inputDataFiltered, inputVariables)
 
     val variables = txnOnPerformanceDate
       .join(distanceFromPreviousTxn, Seq("tag"), "outer")
@@ -72,8 +69,7 @@ object VariableCreation extends App {
       .join(prev1to7, Seq("tag"), "outer")
       .join(same_state, Seq("tag"), "outer")
       .join(discount, Seq("tag"), "outer")
-    //      .join(clubbed_class, Seq("tag"), "outer")
-    //      .join(txn, Seq("tag"), "outer")
+
     // .persist(StorageLevel.DISK_ONLY)
 
     val distinctTag = DistinctTag(inputDataFiltered, inputVariables)

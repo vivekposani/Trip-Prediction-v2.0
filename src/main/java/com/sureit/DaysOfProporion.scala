@@ -18,7 +18,7 @@ object DaysOfProporion {
     import spark.implicits._
     val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
-    val j = inputVariables(2)
+
     //    print("Enter Max Date for Days Proportion :")
     //    val MaxDate = S.next()
     val MaxDate = LocalDate.parse(performanceDate).minusDays(90).toString()
@@ -29,6 +29,8 @@ object DaysOfProporion {
       .distinct()
       .filter(x => (x._2 != performanceDate))
       .filter(x => (x._2 >= MaxDate))
+    //      .toDS()
+
     //  .persist(StorageLevel.DISK_ONLY)
 
     val tagTimeDF = customizedInputData
@@ -36,12 +38,13 @@ object DaysOfProporion {
       .withColumn("time", to_date($"time"))
     //tagTimeDF.show
     //    spark.catalog.dropTempView("inputPlaza")
-    val view = "tempview" + j
+    //    val view = "tempview" + j + inputPlaza
 
-    tagTimeDF.createTempView(view)
+    //    tagTimeDF.createOrReplaceTempView(view)
 
-    val tagCountMinDF = spark.sql("select tag,count(tag) count,min(time) start_date from " + view + " group by tag")
+    //        val tagCountMinDF = spark.sql("select tag,count(tag) count,min(time) start_date from " + view + " group by tag")
 
+    val tagCountMinDF = tagTimeDF.groupBy($"tag").agg(count($"tag").alias("count"), min($"time").alias("start_date"))
     val tagCountDiff = tagCountMinDF.withColumn("diff", datediff(to_date(lit(performanceDate)), $"start_date"))
     val daysProportionDF = tagCountDiff.select($"tag", bround(($"count" / $"diff"), 7) as "dp").withColumn("dplog", bround(log(10, "dp"), 7))
 
