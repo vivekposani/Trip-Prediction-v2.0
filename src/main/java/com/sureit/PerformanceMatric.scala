@@ -33,80 +33,88 @@ import org.apache.spark.sql.functions
 object PerformanceMatric extends App {
   Logger.getLogger("org").setLevel(Level.ERROR)
 
-  val spark: SparkSession = getSparkSession()
-  val plazalist1 = getInputPlaza.mapPartitionsWithIndex {
-    (idx, iter) => if (idx == 0) iter.drop(1) else iter
-  }
-  val plazalist = plazalist1.collect().toList
-  val url = "jdbc:sqlserver://192.168.70.15:1433; database=SUREIT"
-  val properties = new Properties()
-  properties.put("user", "vivek")
-  properties.put("password", "welcome123")
-  properties.put("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
-  //    val format = new SimpleDateFormat("yyyy-MM-dd")
-  //  val performanceDate = format.format(Calendar.getInstance().getTime())
-  //  val TestDate = LocalDate.parse(performanceDate).minusDays(1).toString()
+  def apply(PlazaForPerform: List[String]) = {
 
-  val x = plazalist.map { x =>
+    val spark: SparkSession = getSparkSession()
+    //    val plazalist1 = getInputPlaza.mapPartitionsWithIndex {
+    //      (idx, iter) => if (idx == 0) iter.drop(1) else iter
+    //    }
+    //    val plazalist = plazalist1.collect().toList
 
-    val plazaWithBetaArray = x.split(";")
-    val plaza = plazaWithBetaArray(0)
-    val date = plazaWithBetaArray(1)
-    //    println(date)
+    val plazalist = PlazaForPerform
 
-    val Input = getInputData(plaza, date)
-    //    println(Input.count())
-    val InputFiltered = Input.mapPartitionsWithIndex {
-      (idx, iter) => if (idx == 0) iter.drop(1) else iter
+    val url = "jdbc:sqlserver://192.168.70.15:1433; database=SUREIT"
+    val properties = new Properties()
+    properties.put("user", "vivek")
+    properties.put("password", "welcome123")
+    properties.put("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+    //    val format = new SimpleDateFormat("yyyy-MM-dd")
+    //  val performanceDate = format.format(Calendar.getInstance().getTime())
+    //  val TestDate = LocalDate.parse(performanceDate).minusDays(1).toString()
+
+    val x = plazalist.map { x =>
+
+      val plazaWithBetaArray = x.split(";")
+      val plaza = plazaWithBetaArray(0)
+      val date = plazaWithBetaArray(1)
+      //    println(date)
+
+      val Input = getInputData(plaza, date)
+      //    println(Input.count())
+      val InputFiltered = Input.mapPartitionsWithIndex {
+        (idx, iter) => if (idx == 0) iter.drop(1) else iter
+      }
+      //    InputFiltered.take(5).foreach(println)
+      val query = "(select distinct TAGID from SUREIT.CTP.INSIGHT where PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = '" + date + "') Event"
+
+      val Event = spark.read.jdbc(url = url, table = query, properties).count()
+      val Predict = InputFiltered.filter(x => x._3 == "1").count()
+
+      val TrueNegitive = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "0").count().toDouble
+      val TruePositive = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "1").count().toDouble
+      val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count().toDouble //FalsePositive
+      val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count().toDouble //FalseNegitive
+
+      val Accuracy = BigDecimal((TrueNegitive + TruePositive) / (TruePositive + TruePositive + Type1 + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+      val Sensitivity = BigDecimal(TruePositive / (TruePositive + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+      val FPR = BigDecimal(Type1 / (Type1 + TrueNegitive)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+      val OPR = BigDecimal(TruePositive / (Type1 + TruePositive)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+      val F1 = BigDecimal((2 * TruePositive) / ((2 * TruePositive) + Type1 + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+
+      val Final = (plaza, date, Event, Predict, TrueNegitive, TruePositive, Type1, Type2, Accuracy, Sensitivity, FPR, OPR, F1)
+
+      Final
+      //    println(Final)
+
+      //    val In1 = InputFiltered.toDF("Tag")
+      //    InputFiltered.toDF("Tag", "Actual", "Predict").createOrReplaceTempView("temp")
+
+      //    In1.show(10)
+
+      //    val FalseNegitive = spark.sql("select count(*) as FalseNegitive from temp where Actual = 0 and Predict = 0")
+      //    val TruePositive = spark.sql("select count(*) as TruePositive from temp where Actual = 1 and Predict = 1")
+      //    val Type1 = spark.sql("select count(*) as Type1 from temp where Actual = 0 and Predict = 1")
+      //    val Type2 = spark.sql("select count(*) as Type2 from temp where Actual = 1 and Predict = 0")
+
+      //    val query = "(select TAGID, case when PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = " + date + " then 1 else 0 end as event from SUREIT.CTP.INSIGHT) Event"
+      //    val event = spark.read.jdbc(url=url, table=query, properties)
+      //    event.show(10)
+
+      //actual input
+      //v1,v2,v3,v4
+      //total
+
     }
-    //    InputFiltered.take(5).foreach(println)
-    val query = "(select distinct TAGID from SUREIT.CTP.INSIGHT where PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = '" + date + "') Event"
+    import spark.sqlContext.implicits._
+    val Output = spark.sparkContext.parallelize(x).toDF("Plaza", "Date", "Event", "Predict", "TrueNegitive", "TruePositive", "Type1", "Type2", "Accuracy", "Sensitivity", "FPR", "OPR", "F1")
 
-    val Event = spark.read.jdbc(url = url, table = query, properties).count()
-    val Predict = InputFiltered.filter(x => x._3 == "1").count()
-
-    val TrueNegitive = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "0").count()
-    val TruePositive = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "1").count()
-    val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count() //FalsePositive
-    val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count() //FalseNegitive
-
-    val Accuracy = (TrueNegitive + TruePositive) / (TruePositive + TruePositive + Type1 + Type2)
-    val Sensitivity = TruePositive / (TruePositive + Type2)
-    val FPR = Type1 / (Type1 + TrueNegitive)
-    val OPR = TruePositive / (Type1 + TruePositive)
-    val F1 = (lit(2) * TruePositive) / ((lit(2) * TruePositive) + Type1 + Type2)
-
-    val Final = (plaza, date, Event, Predict, TrueNegitive, TruePositive, Type1, Type2, Accuracy, Sensitivity, FPR, OPR)
-
-    Final
-    //    println(Final)
-
-    //    val In1 = InputFiltered.toDF("Tag")
-    //    InputFiltered.toDF("Tag", "Actual", "Predict").createOrReplaceTempView("temp")
-
-    //    In1.show(10)
-
-    //    val FalseNegitive = spark.sql("select count(*) as FalseNegitive from temp where Actual = 0 and Predict = 0")
-    //    val TruePositive = spark.sql("select count(*) as TruePositive from temp where Actual = 1 and Predict = 1")
-    //    val Type1 = spark.sql("select count(*) as Type1 from temp where Actual = 0 and Predict = 1")
-    //    val Type2 = spark.sql("select count(*) as Type2 from temp where Actual = 1 and Predict = 0")
-
-    //    val query = "(select TAGID, case when PLAZACODE = " + plaza + " and cast(EXITTXNDATE as date) = " + date + " then 1 else 0 end as event from SUREIT.CTP.INSIGHT) Event"
-    //    val event = spark.read.jdbc(url=url, table=query, properties)
-    //    event.show(10)
-
-    //actual input
-    //v1,v2,v3,v4
-    //total
+    Output
 
   }
-  import spark.implicits._
-  val Output = spark.sparkContext.parallelize(x).toDF("Plaza", "Date", "Event", "Predict", "FalseNegitive", "TruePositive", "Type1", "Type2")
-  Output.show(50)
-  val format = new SimpleDateFormat("yyyy-MM-dd")
-  val Date = format.format(Calendar.getInstance().getTime())
-  write(Output, Date)
-  //println(x.mkString(","))
+  //    val format = new SimpleDateFormat("yyyy-MM-dd")
+  //    val Date = format.format(Calendar.getInstance().getTime())
+  //    write(Output, Date)
+  //  println(x.mkString(","))
 
   def getSparkSession(): SparkSession = {
     SparkSession
@@ -121,20 +129,20 @@ object PerformanceMatric extends App {
     val spark = getSparkSession()
     spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/Implementation/" + plaza + "/" + date + "/")
       .map(_.split(","))
-      .map(x => (x(0), x(1), x(19)))
+      .map(x => (x(0), x(1), x(20)))
   }
 
-  def getInputPlaza = {
-
-    val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
-
-  }
-
-  def write(df: DataFrame, date: String) = {
-    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
-    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
-
-  }
+  //  def getInputPlaza = {
+  //
+  //    val spark = getSparkSession()
+  //    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
+  //
+  //  }
+  //
+  //  def write(df: DataFrame, date: String) = {
+  //    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
+  //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
+  //
+  //  }
 
 }

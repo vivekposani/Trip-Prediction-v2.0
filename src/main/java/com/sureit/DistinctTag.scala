@@ -12,9 +12,11 @@ object DistinctTag {
     import spark.implicits._
     val performanceDate = inputVariables(1)
     val inputPlaza = inputVariables(0)
+//    val vclass = inputVariables(2)
     val distinctTag = inputData
       .filter(x => x._3.substring(0, 10) <= performanceDate)
       .filter(x => (x._2 == inputPlaza))
+//      .filter(x => (x._6 == vclass))
       .map(x => (x._1))
       .distinct
     // .persist(StorageLevel.DISK_ONLY)

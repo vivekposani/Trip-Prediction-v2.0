@@ -1,6 +1,9 @@
 package com.sureit
 
 import org.apache.spark._
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import org.apache.spark.sql.functions
 import scala.collection.Iterator
 import org.apache.spark.storage.StorageLevel
 import java.util.Scanner
@@ -24,17 +27,19 @@ import java.sql.Timestamp
 import org.apache.spark.SparkException
 
 object Implementation extends App {
-  //  Logger.getLogger("org").setLevel(Level.ERROR)
+  Logger.getLogger("org").setLevel(Level.ERROR)
 
   val t0 = System.currentTimeMillis()
   val spark: SparkSession = getSparkSession()
   import spark.implicits._
 
   val plazalist = getInputPlaza
-    .mapPartitionsWithIndex {
-      (idx, iter) => if (idx == 0) iter.drop(1) else iter
-    }
-    .collect().toList.par
+    //    .mapPartitionsWithIndex {
+    //      (idx, iter) => if (idx == 0) iter.drop(1) else iter
+    //    }
+    .collect().toList
+
+  val PlazaForPerform = getInputPlaza.collect().toList
 
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
 
@@ -59,6 +64,7 @@ object Implementation extends App {
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
+    //    val vclass = plazaWithBetaArray(2)
     val beta = plazaWithBetaArray(2).split(",")
     val cutoff = plazaWithBetaArray(3)
 
@@ -67,16 +73,29 @@ object Implementation extends App {
     val inputVariables = Array(plaza, date)
     val variables = VariableCreation(inputData, inputVariables)
     val implementationOut = Probability(variables, beta, cutoff)
-    implementationOut.show(10)
+    //    implementationOut.show(10)
+    //    println("-------------------------------------------------------------------------------------------------")
+    //    println("-------------------------------------------------------------------------------------------------")
+
     //
     //    val out = implementationOut.collect().map(x => (x(0), x(1), x(17)))
     //    println(out)
 
-    //    writeToCSV(implementationOut, plaza, date)
+    writeToCSV(implementationOut, plaza, date)
 
-    //    println("Plaza " + plaza + " Done")s
+    println("Plaza " + plaza + " Done")
 
   }
+
+  val Performance = PerformanceMatric(PlazaForPerform)
+  //  println("-------------------------------------------------------------------------------------------------")
+  //  println("-------------------------------------------------------------------------------------------------")
+
+  Performance.show(10)
+  val format = new SimpleDateFormat("yyyy-MM-dd")
+  val Date = format.format(Calendar.getInstance().getTime())
+
+  write(Performance, Date)
 
   def getSparkSession(): SparkSession = {
     SparkSession
@@ -90,7 +109,7 @@ object Implementation extends App {
   def getInputPlaza = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
+    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.csv")
 
   }
 
@@ -118,6 +137,12 @@ object Implementation extends App {
 
     val t1 = System.currentTimeMillis()
     print((t1 - t0).toFloat / 1000)
+
+  }
+
+  def write(df: DataFrame, date: String) = {
+    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
+    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
 
   }
 

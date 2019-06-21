@@ -31,7 +31,8 @@ object LastPlaza extends App {
     val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
 
-    val inputDataFiltered = inputData.filter(x => x._2 == inputPlaza)
+    val inputDataFiltered = inputData
+//    .filter(x => x._2 == inputPlaza)
       .filter(x => (x._3.substring(0, 10) != performanceDate))
       .map(x => (x._1, x._2, x._3))
       .toDS()
@@ -39,7 +40,7 @@ object LastPlaza extends App {
     val lastPlazaTime = inputDataFiltered.groupByKey(x => x._1)
       .reduceGroups((x, y) => if (x._3 > y._3) { x } else { y })
       .map(x => x._2)
-      .toDF("tag", "plaza", "time")
+      .toDF("tag", "LastPlaza", "LastTime")
 
     lastPlazaTime
 
