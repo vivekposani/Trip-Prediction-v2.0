@@ -28,10 +28,10 @@ object VariableDynamic extends App {
   val t0 = System.currentTimeMillis()
   //  val In2 = "2018-10-01"
   val spark = getSparkSession()
-  val In = getInputPlaza.mapPartitionsWithIndex {
-    (idx, iter) => if (idx == 0) iter.drop(1) else iter
-  }
-  val plazalist = In.collect.toList.par
+//  val In = getInputPlaza.mapPartitionsWithIndex {
+//    (idx, iter) => if (idx == 0) iter.drop(1) else iter
+//  }
+  val plazalist = getInputPlaza.collect.toList.par
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
 
   //   val plaza = "8001"
@@ -52,14 +52,16 @@ object VariableDynamic extends App {
     val plazaWithBetaArray = x.split(";")
     val plaza = plazaWithBetaArray(0)
     val date = plazaWithBetaArray(1)
+//    val vclass = plazaWithBetaArray(2)
     //    val beta = plazaWithBetaArray(1).split(",")
     println("Started running for Plaza : " + plaza)
     val inputVariables = Array(plaza, date)
     val lastplaza = LastPlaza(inputData, inputVariables)
-    val variables = VariableCreation(inputData, inputVariables).join(lastplaza, Seq("tag"), "outer")
-    variables.show(10)
+    val variables = VariableCreation(inputData, inputVariables)
+    .join(lastplaza, Seq("tag"), "left_outer")
+//    variables.show(10)
 
-    //        writeToCSV(variables, plaza, date)
+    writeToCSV(variables, plaza, date)
     println("Plaza " + plaza + " Done")
 
   }
@@ -76,7 +78,7 @@ object VariableDynamic extends App {
   def getInputPlaza = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
+    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.txt")
 
   }
 

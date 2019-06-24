@@ -42,6 +42,7 @@ object VariableCreation extends App {
     //      Array(In1, In2)
     //    val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
+
     //    val j = inputVariables(2)
     //    val inputVariables1 = Array(inputPlaza, performanceDate, j)
     //  val inputDate = LocalDate.parse(inputVariables(1))
@@ -53,6 +54,7 @@ object VariableCreation extends App {
 
     val inputDataFiltered = inputData
       .filter(x => (x._3.substring(0, 10) <= performanceDate))
+
     //    .filter(x => (x._3.substring(0, 10) >= startDate))
     //.persist(StorageLevel.MEMORY_AND_DISK)
 
