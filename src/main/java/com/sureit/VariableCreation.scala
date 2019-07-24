@@ -54,6 +54,7 @@ object VariableCreation extends App {
 
     val inputDataFiltered = inputData
       .filter(x => (x._3.substring(0, 10) <= performanceDate))
+      .filter(x => (x._6 == "C3"))
 
     //    .filter(x => (x._3.substring(0, 10) >= startDate))
     //.persist(StorageLevel.MEMORY_AND_DISK)
@@ -89,8 +90,12 @@ object VariableCreation extends App {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode","cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 

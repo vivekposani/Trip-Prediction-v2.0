@@ -33,7 +33,7 @@ import org.apache.spark.sql.functions
 object PerformanceMatric extends App {
   Logger.getLogger("org").setLevel(Level.ERROR)
 
-  def apply(PlazaForPerform: List[String]) = {
+  def apply(PlazaForPerform: List[String]) : DataFrame = {
 
     val spark: SparkSession = getSparkSession()
     //    val plazalist1 = getInputPlaza.mapPartitionsWithIndex {
@@ -75,11 +75,11 @@ object PerformanceMatric extends App {
       val Type1 = InputFiltered.filter(x => x._2 == "0").filter(x => x._3 == "1").count().toDouble //FalsePositive
       val Type2 = InputFiltered.filter(x => x._2 == "1").filter(x => x._3 == "0").count().toDouble //FalseNegitive
 
-      val Accuracy = BigDecimal((TrueNegitive + TruePositive) / (TruePositive + TruePositive + Type1 + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
-      val Sensitivity = BigDecimal(TruePositive / (TruePositive + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
-      val FPR = BigDecimal(Type1 / (Type1 + TrueNegitive)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
-      val OPR = BigDecimal(TruePositive / (Type1 + TruePositive)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
-      val F1 = BigDecimal((2 * TruePositive) / ((2 * TruePositive) + Type1 + Type2)).setScale(5, BigDecimal.RoundingMode.DOWN).toDouble
+      val Accuracy = (TrueNegitive + TruePositive) / (TruePositive + TrueNegitive + Type1 + Type2).toDouble
+      val Sensitivity = TruePositive / (TruePositive + Type2).toDouble
+      val FPR = Type1 / (Type1 + TrueNegitive).toDouble
+      val OPR = TruePositive / (Type1 + TruePositive).toDouble
+      val F1 = (2 * TruePositive) / ((2 * TruePositive) + Type1 + Type2).toDouble
 
       val Final = (plaza, date, Event, Predict, TrueNegitive, TruePositive, Type1, Type2, Accuracy, Sensitivity, FPR, OPR, F1)
 
@@ -110,18 +110,22 @@ object PerformanceMatric extends App {
 
     Output
 
+//    val format = new SimpleDateFormat("yyyy-MM-dd")
+//    val Date = format.format(Calendar.getInstance().getTime())
+//    write(Output, Date)
+
   }
-  //    val format = new SimpleDateFormat("yyyy-MM-dd")
-  //    val Date = format.format(Calendar.getInstance().getTime())
-  //    write(Output, Date)
-  //  println(x.mkString(","))
 
   def getSparkSession(): SparkSession = {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode","cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 
@@ -132,17 +136,17 @@ object PerformanceMatric extends App {
       .map(x => (x(0), x(1), x(20)))
   }
 
-  //  def getInputPlaza = {
-  //
-  //    val spark = getSparkSession()
-  //    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza2.txt")
-  //
-  //  }
-  //
-  //  def write(df: DataFrame, date: String) = {
-  //    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
-  //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
-  //
-  //  }
+  def getInputPlaza = {
+
+    val spark = getSparkSession()
+    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.csv")
+
+  }
+
+  def write(df: DataFrame, date: String) = {
+    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
+    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
+
+  }
 
 }

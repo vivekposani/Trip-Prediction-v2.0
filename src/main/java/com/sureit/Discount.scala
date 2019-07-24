@@ -21,6 +21,7 @@ import scala.collection.immutable.TreeSet
 import org.apache.spark.sql.SQLImplicits
 import java.time.{ LocalDate, LocalDateTime, Period, Duration }
 import java.time.format.DateTimeFormatter
+
 object Discount extends App {
 
   case class Record(tag: String, time: String, discount: String)
@@ -76,8 +77,12 @@ object Discount extends App {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode", "cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 }

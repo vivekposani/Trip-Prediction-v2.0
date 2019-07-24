@@ -12,6 +12,7 @@ object TxnOnPerformanceDate {
     import spark.implicits._
     val inputPlaza = inputVariables(0)
     val performanceDate = inputVariables(1)
+
     val customizedInputData = inputData.filter(x => x._2 == inputPlaza)
       .map(x => (x._1, x._3.substring(0, 10)))
       .distinct
@@ -27,8 +28,12 @@ object TxnOnPerformanceDate {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode", "cluster")
+      .config("spark.executor.memory", "36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 }
