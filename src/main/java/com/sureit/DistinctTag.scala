@@ -12,11 +12,11 @@ object DistinctTag {
     import spark.implicits._
     val performanceDate = inputVariables(1)
     val inputPlaza = inputVariables(0)
-//    val vclass = inputVariables(2)
+    //    val vclass = inputVariables(2)
     val distinctTag = inputData
       .filter(x => x._3.substring(0, 10) <= performanceDate)
       .filter(x => (x._2 == inputPlaza))
-//      .filter(x => (x._6 == vclass))
+      //      .filter(x => (x._6 == vclass))
       .map(x => (x._1))
       .distinct
     // .persist(StorageLevel.DISK_ONLY)
@@ -29,8 +29,12 @@ object DistinctTag {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode", "cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 }

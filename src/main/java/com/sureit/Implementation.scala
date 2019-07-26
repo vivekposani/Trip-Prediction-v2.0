@@ -1,6 +1,7 @@
 package com.sureit
 
 import org.apache.spark._
+import org.apache.spark.ml.classification.LogisticRegression
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import org.apache.spark.sql.functions
@@ -34,12 +35,14 @@ object Implementation extends App {
   import spark.implicits._
 
   val plazalist = getInputPlaza
-    //    .mapPartitionsWithIndex {
-    //      (idx, iter) => if (idx == 0) iter.drop(1) else iter
-    //    }
+    .mapPartitionsWithIndex {
+      (idx, iter) => if (idx == 0) iter.drop(1) else iter
+    }
     .collect().toList
 
-  val PlazaForPerform = getInputPlaza.collect().toList
+  val PlazaForPerform = getInputPlaza.mapPartitionsWithIndex {
+    (idx, iter) => if (idx == 0) iter.drop(1) else iter
+  }.collect().toList
 
   val inputData = getInputData.persist(StorageLevel.DISK_ONLY)
 
@@ -85,13 +88,19 @@ object Implementation extends App {
 
     println("Plaza " + plaza + " Done")
 
+    //    val lr = new LogisticRegression()
+    //      .setMaxIter(17)
+    //      .setRegParam(0.3)
+    //      .setElasticNetParam(0.8)
+    //
+    //    val lrModel = lr.fit(variables)
+    //
+    //    println(s"Coefficients: ${lrModel.coefficients} Intercept: ${lrModel.intercept}")
+
   }
 
   val Performance = PerformanceMatric(PlazaForPerform)
-  //  println("-------------------------------------------------------------------------------------------------")
-  //  println("-------------------------------------------------------------------------------------------------")
 
-  Performance.show(10)
   val format = new SimpleDateFormat("yyyy-MM-dd")
   val Date = format.format(Calendar.getInstance().getTime())
 
@@ -101,22 +110,27 @@ object Implementation extends App {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode","cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.scheduler.mode","FAIR")
+//      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
 
   def getInputPlaza = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/Plaza.csv")
+    spark.sparkContext.textFile("hdfs://192.168.70.21:9000/vivek/INSIGHT/CSV/Plaza.txt")
 
   }
 
   def getInputData = {
 
     val spark = getSparkSession()
-    spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/TagPlazaTimeStateDiscountClassTxn.txt")
+    spark.sparkContext.textFile("hdfs://192.168.70.21:9000/vivek/INSIGHT/CSV/TagPlazaTimeStateDiscountClassTxn.txt")
       .map(_.split(","))
       //    val y = (t.filter(x => x.size != 7))
       //    println(y.count)
@@ -130,7 +144,7 @@ object Implementation extends App {
 
     //      print("Enter Variable Creation Version Code : ")
 
-    val folder = "hdfs://192.168.70.7:9000/vivek/Implementation/" + plaza + "/" + date + "/"
+    val folder = "hdfs://192.168.70.21:9000/vivek/Implementation/" + plaza + "/" + date + "/"
     //    val folder2 = "file:///192.168.70.15/Share_Folder/Variable_Creation"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
     //    df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder2)
@@ -141,7 +155,7 @@ object Implementation extends App {
   }
 
   def write(df: DataFrame, date: String) = {
-    val folder = "hdfs://192.168.70.7:9000/vivek/PerformanceMatrix/" + date + "/"
+    val folder = "hdfs://192.168.70.21:9000/vivek/PerformanceMatrix/" + date + "/"
     df.repartition(1).write.format("csv").mode("overwrite").option("header", "true").save(folder)
 
   }

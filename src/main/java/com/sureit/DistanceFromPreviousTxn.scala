@@ -21,6 +21,7 @@ import scala.collection.immutable.TreeSet
 import org.apache.spark.sql.SQLImplicits
 import java.time.{ LocalDate, LocalDateTime, Period, Duration }
 import java.time.format.DateTimeFormatter
+
 object DistanceFromPreviousTxn extends App {
 
   case class Record(tag: String, plaza: String, date: String, time: String)
@@ -68,13 +69,17 @@ object DistanceFromPreviousTxn extends App {
     SparkSession
       .builder
       .appName("SparkSQL")
-      .master("local[*]")
-      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.7:9000/vivek/temp")
+      .master("spark://192.168.70.21:7077")
+      .config("spark.submit.deployMode", "cluster")
+      .config("spark.executor.memory","36g")
+      .config("spark.driver.cores","4")
+      .config("spark.driver.memory","4g")
+      .config("spark.sql.warehouse.dir", "hdfs://192.168.70.21:9000/vivek/temp")
       .getOrCreate()
   }
   def getplazaDistance = {
     val spark = getSparkSession()
-    val distanceRDD = spark.sparkContext.textFile("hdfs://192.168.70.7:9000/vivek/INSIGHT/CSV/PlazaCodeDistance.txt").map(_.split(",")).map(x => (x(0), x(1), x(2).toFloat))
+    val distanceRDD = spark.sparkContext.textFile("hdfs://192.168.70.21:9000/vivek/INSIGHT/CSV/PlazaCodeDistance.txt").map(_.split(",")).map(x => (x(0), x(1), x(2).toFloat))
     //  distanceRDD.groupByKey.collectAsMap().map(x => (x._1, x._2.toMap))
     distanceRDD
   }
